@@ -245,156 +245,76 @@
         </div>
     </main>
 
-    <script src="js/catalog-manager.js"></script>
+    <script src="config.js"></script>
     <script>
-        // Função para renderizar os produtos por categoria
-        function renderProducts(filterCategory = 'all') {
-            console.log('Renderizando produtos...');
-            const products = CatalogManager.loadProducts();
-            
-            // Limpar todos os containers
-            document.querySelectorAll('.cards-container').forEach(container => {
-                container.innerHTML = '';
-            });
+        let products = [];
 
-            // Mostrar/esconder seções baseado no filtro
-            document.querySelectorAll('.cards-section').forEach(section => {
-                section.style.display = filterCategory === 'all' || 
-                    section.id === `${filterCategory}Section` ? 'block' : 'none';
-            });
+        // Função para carregar produtos da API
+        async function loadProducts() {
+            try {
+                const response = await fetch(`${window.location.origin}/api/products`);
+                if (!response.ok) throw new Error('Erro ao carregar produtos');
+                products = await response.json();
+                displayProducts();
+            } catch (error) {
+                console.error('Erro:', error);
+            }
+        }
 
-            // Organizar produtos por categoria
+        // Função para exibir produtos
+        function displayProducts() {
+            const container = document.querySelector('.products-container');
+            container.innerHTML = '';
+
             products.forEach(product => {
-                if (!product.category) {
-                    console.warn('Produto sem categoria:', product);
-                    return;
-                }
-
-                if (filterCategory === 'all' || product.category === filterCategory) {
-                    const sectionId = `${product.category}Section`;
-                    const container = document.querySelector(`#${sectionId} .cards-container`);
-                    
-                    if (container) {
-                        const card = document.createElement('div');
-                        card.className = 'card';
-                        card.setAttribute('data-category', product.category);
-                        
-                        // Verificar se a imagem é base64 ou URL
-                        const imageUrl = product.image.startsWith('data:') ? 
-                            product.image : 
-                            product.image || 'img/default.jpg';
-
-                        card.innerHTML = `
-                            <button class="close-button" title="Fechar">
-                                <i class="fas fa-times"></i>
-                            </button>
-                            <div class="card-image">
-                                <img src="${imageUrl}" alt="${product.name}" 
-                                     onerror="this.src='img/default.jpg'">
-                            </div>
-                            <div class="card-content">
-                                <h3 class="product-name">${product.name}</h3>
-                                <p class="product-description">${product.description}</p>
-                            </div>
-                        `;
-
-                        // Adicionar listener para o botão fechar
-                        const closeButton = card.querySelector('.close-button');
-                        closeButton.addEventListener('click', (e) => {
-                            e.stopPropagation(); // Impedir que o clique propague para o card
-                            closeCard();
-                        });
-
-                        // Adicionar listener para expandir
-                        card.addEventListener('click', function() {
-                            if (!card.classList.contains('expanded')) {
-                                expandCard(card);
-                            }
-                        });
-
-                        container.appendChild(card);
-                    } else {
-                        console.warn(`Container não encontrado para categoria: ${product.category}`);
-                    }
-                }
-            });
-
-            // Esconder seções vazias
-            document.querySelectorAll('.cards-section').forEach(section => {
-                const container = section.querySelector('.cards-container');
-                if (!container.children.length) {
-                    section.style.display = 'none';
-                }
+                const card = document.createElement('div');
+                card.className = 'product-card';
+                card.innerHTML = `
+                    <div class="product-image">
+                        <img src="${product.image}" alt="${product.name}" onerror="this.src='img/default.jpg'">
+                    </div>
+                    <div class="product-info">
+                        <h3>${product.name}</h3>
+                        <p>${product.description}</p>
+                        <span class="category">${product.category}</span>
+                    </div>
+                `;
+                container.appendChild(card);
             });
         }
 
-        // Funções de expansão/contração de cards
-        let currentExpandedCard = null;
+        // Filtrar produtos por categoria
+        function filterProducts(category) {
+            const buttons = document.querySelectorAll('.filter-btn');
+            buttons.forEach(btn => btn.classList.remove('active'));
+            document.querySelector(`[data-category="${category}"]`).classList.add('active');
 
-        function expandCard(card) {
-            if (currentExpandedCard) {
-                closeCard();
-            }
-            
-            const cards = document.querySelectorAll('.card');
-            cards.forEach(c => {
-                if (c !== card) {
-                    c.style.display = 'none';
-                }
+            const container = document.querySelector('.products-container');
+            container.innerHTML = '';
+
+            const filteredProducts = category === 'todos' 
+                ? products 
+                : products.filter(product => product.category === category);
+
+            filteredProducts.forEach(product => {
+                const card = document.createElement('div');
+                card.className = 'product-card';
+                card.innerHTML = `
+                    <div class="product-image">
+                        <img src="${product.image}" alt="${product.name}" onerror="this.src='img/default.jpg'">
+                    </div>
+                    <div class="product-info">
+                        <h3>${product.name}</h3>
+                        <p>${product.description}</p>
+                        <span class="category">${product.category}</span>
+                    </div>
+                `;
+                container.appendChild(card);
             });
-            
-            card.classList.add('expanded');
-            currentExpandedCard = card;
         }
 
-        function closeCard() {
-            if (currentExpandedCard) {
-                currentExpandedCard.classList.remove('expanded');
-                const cards = document.querySelectorAll('.card');
-                cards.forEach(card => {
-                    card.style.display = 'flex';
-                });
-                currentExpandedCard = null;
-            }
-        }
-
-        // Inicializar
-        document.addEventListener('DOMContentLoaded', function() {
-            console.log('Página carregada, iniciando...');
-            
-            // Renderizar produtos iniciais
-            renderProducts();
-
-            // Adicionar listeners aos botões de categoria
-            document.querySelectorAll('.category-btn').forEach(btn => {
-                btn.addEventListener('click', function() {
-                    // Atualizar estado ativo dos botões
-                    document.querySelectorAll('.category-btn').forEach(b => 
-                        b.classList.remove('active'));
-                    this.classList.add('active');
-
-                    // Renderizar produtos da categoria
-                    renderProducts(this.dataset.category);
-                });
-            });
-
-            // Iniciar monitoramento de mudanças
-            CatalogManager.startMonitoring();
-
-            // Escutar por atualizações
-            window.addEventListener('catalog_updated', (event) => {
-                console.log('Atualização recebida:', event.detail);
-                const activeCategory = document.querySelector('.category-btn.active').dataset.category;
-                renderProducts(activeCategory);
-            });
-
-            // Fechar card expandido com ESC
-            document.addEventListener('keydown', (e) => {
-                if (e.key === 'Escape' && currentExpandedCard) {
-                    closeCard();
-                }
-            });
-        });
+        // Carregar produtos quando a página carregar
+        document.addEventListener('DOMContentLoaded', loadProducts);
     </script>
 </body>
 </html>

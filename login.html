@@ -110,6 +110,7 @@
         </form>
     </div>
 
+    <script src="config.js"></script>
     <script>
         // Credenciais de exemplo (em produção, isso deveria estar no servidor)
         const VALID_CREDENTIALS = {
@@ -117,7 +118,7 @@
             password: 'admin123'
         };
 
-        document.getElementById('loginForm').addEventListener('submit', function(e) {
+        document.getElementById('loginForm').addEventListener('submit', async function(e) {
             e.preventDefault();
             
             const username = document.getElementById('username').value;
@@ -125,10 +126,16 @@
             const errorMessage = document.getElementById('errorMessage');
             
             if (username === VALID_CREDENTIALS.username && password === VALID_CREDENTIALS.password) {
-                // Salva o estado de autenticação
-                sessionStorage.setItem('isAuthenticated', 'true');
-                // Redireciona para a página admin
-                window.location.href = 'admin.html';
+                try {
+                    // Simula uma chamada de API para obter o token
+                    const token = btoa(username + ':' + password); // Em produção, use JWT
+                    localStorage.setItem('token', token);
+                    window.location.href = 'admin.html';
+                } catch (error) {
+                    console.error('Erro ao fazer login:', error);
+                    errorMessage.textContent = 'Erro ao fazer login. Tente novamente.';
+                    errorMessage.style.display = 'block';
+                }
             } else {
                 errorMessage.style.display = 'block';
             }
