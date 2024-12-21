@@ -1,0 +1,400 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="catalogo.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <title>Catálogo</title>
+    <style>
+        .categories-nav {
+            background-color: #fff;
+            padding: 1rem 2rem;
+            margin: 1rem 0;
+            border-radius: 0.5rem;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+
+        .categories-list {
+            display: flex;
+            gap: 1rem;
+            list-style: none;
+            overflow-x: auto;
+            padding: 0.5rem 0;
+            -webkit-overflow-scrolling: touch;
+        }
+
+        .category-btn {
+            padding: 0.5rem 1rem;
+            border: none;
+            background: none;
+            color: #4b5563;
+            cursor: pointer;
+            font-size: 0.875rem;
+            border-radius: 0.375rem;
+            white-space: nowrap;
+            transition: all 0.2s;
+        }
+
+        .category-btn:hover {
+            background-color: #f3f4f6;
+            color: #1f2937;
+        }
+
+        .category-btn.active {
+            background-color: #2563eb;
+            color: white;
+        }
+
+        .section-title {
+            font-size: 1.5rem;
+            color: #1f2937;
+            margin: 2rem 0 1rem;
+            padding-left: 2rem;
+        }
+
+        .cards-section {
+            margin-bottom: 3rem;
+        }
+
+        .cards-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            gap: 1.5rem;
+            padding: 1.5rem;
+        }
+
+        .card {
+            background: white;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            transition: transform 0.2s;
+            cursor: pointer;
+            display: flex;
+            flex-direction: column;
+            height: 380px;
+        }
+
+        .card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+
+        .card.expanded {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 90%;
+            max-width: 800px;
+            height: auto;
+            max-height: 90vh;
+            z-index: 1000;
+            cursor: default;
+            background: white;
+            padding: 1rem;
+        }
+
+        .close-button {
+            position: absolute;
+            top: 1rem;
+            right: 1rem;
+            background: rgba(0, 0, 0, 0.5);
+            color: white;
+            border: none;
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            cursor: pointer;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+            transition: background-color 0.2s;
+            z-index: 1001;
+        }
+
+        .close-button:hover {
+            background: rgba(0, 0, 0, 0.7);
+        }
+
+        .card.expanded .close-button {
+            display: flex;
+        }
+
+        .card-image {
+            width: 100%;
+            height: 250px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .card-image img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transition: transform 0.3s;
+        }
+
+        .card:hover .card-image img {
+            transform: scale(1.05);
+        }
+
+        .card-content {
+            padding: 1rem;
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .product-name {
+            font-size: 1.125rem;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+            color: #1f2937;
+        }
+
+        .product-description {
+            color: #6b7280;
+            font-size: 0.875rem;
+            line-height: 1.5;
+            flex-grow: 1;
+        }
+
+        @media (max-width: 768px) {
+            .categories-nav {
+                padding: 1rem;
+            }
+
+            .cards-container {
+                padding: 1rem;
+                gap: 1rem;
+                grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            }
+
+            .card {
+                height: 350px;
+            }
+
+            .card-image {
+                height: 200px;
+            }
+        }
+
+        .cards-section:empty {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <header class="header">
+        <div class="header-left">
+            <a href="index.html" class="nav-button back-button">
+                <i class="fas fa-arrow-left"></i>
+                <span>Voltar</span>
+            </a>
+        </div>
+        <div class="header-center">
+            <h1>Catálogo</h1>
+        </div>
+        <div class="header-right">
+            <button class="nav-button" id="contactBtn">
+                <i class="fas fa-envelope"></i>
+                <span>Contato</span>
+            </button>
+        </div>
+    </header>
+
+    <nav class="categories-nav">
+        <ul class="categories-list">
+            <li><button class="category-btn active" data-category="all">Todos</button></li>
+            <li><button class="category-btn" data-category="bags">Bags</button></li>
+            <li><button class="category-btn" data-category="bermudas">Bermudas</button></li>
+            <li><button class="category-btn" data-category="bones">Bonés</button></li>
+            <li><button class="category-btn" data-category="calcas">Calças</button></li>
+            <li><button class="category-btn" data-category="camisas">Camisas</button></li>
+            <li><button class="category-btn" data-category="moletons">Moletons</button></li>
+        </ul>
+    </nav>
+
+    <main>
+        <div id="bagsSection" class="cards-section">
+            <h2 class="section-title">Bags</h2>
+            <div class="cards-container"></div>
+        </div>
+        <div id="bermudasSection" class="cards-section">
+            <h2 class="section-title">Bermudas</h2>
+            <div class="cards-container"></div>
+        </div>
+        <div id="bonesSection" class="cards-section">
+            <h2 class="section-title">Bonés</h2>
+            <div class="cards-container"></div>
+        </div>
+        <div id="calcasSection" class="cards-section">
+            <h2 class="section-title">Calças</h2>
+            <div class="cards-container"></div>
+        </div>
+        <div id="camisasSection" class="cards-section">
+            <h2 class="section-title">Camisas</h2>
+            <div class="cards-container"></div>
+        </div>
+        <div id="moletonsSection" class="cards-section">
+            <h2 class="section-title">Moletons</h2>
+            <div class="cards-container"></div>
+        </div>
+    </main>
+
+    <script src="js/catalog-manager.js"></script>
+    <script>
+        // Função para renderizar os produtos por categoria
+        function renderProducts(filterCategory = 'all') {
+            console.log('Renderizando produtos...');
+            const products = CatalogManager.loadProducts();
+            
+            // Limpar todos os containers
+            document.querySelectorAll('.cards-container').forEach(container => {
+                container.innerHTML = '';
+            });
+
+            // Mostrar/esconder seções baseado no filtro
+            document.querySelectorAll('.cards-section').forEach(section => {
+                section.style.display = filterCategory === 'all' || 
+                    section.id === `${filterCategory}Section` ? 'block' : 'none';
+            });
+
+            // Organizar produtos por categoria
+            products.forEach(product => {
+                if (!product.category) {
+                    console.warn('Produto sem categoria:', product);
+                    return;
+                }
+
+                if (filterCategory === 'all' || product.category === filterCategory) {
+                    const sectionId = `${product.category}Section`;
+                    const container = document.querySelector(`#${sectionId} .cards-container`);
+                    
+                    if (container) {
+                        const card = document.createElement('div');
+                        card.className = 'card';
+                        card.setAttribute('data-category', product.category);
+                        
+                        // Verificar se a imagem é base64 ou URL
+                        const imageUrl = product.image.startsWith('data:') ? 
+                            product.image : 
+                            product.image || 'img/default.jpg';
+
+                        card.innerHTML = `
+                            <button class="close-button" title="Fechar">
+                                <i class="fas fa-times"></i>
+                            </button>
+                            <div class="card-image">
+                                <img src="${imageUrl}" alt="${product.name}" 
+                                     onerror="this.src='img/default.jpg'">
+                            </div>
+                            <div class="card-content">
+                                <h3 class="product-name">${product.name}</h3>
+                                <p class="product-description">${product.description}</p>
+                            </div>
+                        `;
+
+                        // Adicionar listener para o botão fechar
+                        const closeButton = card.querySelector('.close-button');
+                        closeButton.addEventListener('click', (e) => {
+                            e.stopPropagation(); // Impedir que o clique propague para o card
+                            closeCard();
+                        });
+
+                        // Adicionar listener para expandir
+                        card.addEventListener('click', function() {
+                            if (!card.classList.contains('expanded')) {
+                                expandCard(card);
+                            }
+                        });
+
+                        container.appendChild(card);
+                    } else {
+                        console.warn(`Container não encontrado para categoria: ${product.category}`);
+                    }
+                }
+            });
+
+            // Esconder seções vazias
+            document.querySelectorAll('.cards-section').forEach(section => {
+                const container = section.querySelector('.cards-container');
+                if (!container.children.length) {
+                    section.style.display = 'none';
+                }
+            });
+        }
+
+        // Funções de expansão/contração de cards
+        let currentExpandedCard = null;
+
+        function expandCard(card) {
+            if (currentExpandedCard) {
+                closeCard();
+            }
+            
+            const cards = document.querySelectorAll('.card');
+            cards.forEach(c => {
+                if (c !== card) {
+                    c.style.display = 'none';
+                }
+            });
+            
+            card.classList.add('expanded');
+            currentExpandedCard = card;
+        }
+
+        function closeCard() {
+            if (currentExpandedCard) {
+                currentExpandedCard.classList.remove('expanded');
+                const cards = document.querySelectorAll('.card');
+                cards.forEach(card => {
+                    card.style.display = 'flex';
+                });
+                currentExpandedCard = null;
+            }
+        }
+
+        // Inicializar
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('Página carregada, iniciando...');
+            
+            // Renderizar produtos iniciais
+            renderProducts();
+
+            // Adicionar listeners aos botões de categoria
+            document.querySelectorAll('.category-btn').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    // Atualizar estado ativo dos botões
+                    document.querySelectorAll('.category-btn').forEach(b => 
+                        b.classList.remove('active'));
+                    this.classList.add('active');
+
+                    // Renderizar produtos da categoria
+                    renderProducts(this.dataset.category);
+                });
+            });
+
+            // Iniciar monitoramento de mudanças
+            CatalogManager.startMonitoring();
+
+            // Escutar por atualizações
+            window.addEventListener('catalog_updated', (event) => {
+                console.log('Atualização recebida:', event.detail);
+                const activeCategory = document.querySelector('.category-btn.active').dataset.category;
+                renderProducts(activeCategory);
+            });
+
+            // Fechar card expandido com ESC
+            document.addEventListener('keydown', (e) => {
+                if (e.key === 'Escape' && currentExpandedCard) {
+                    closeCard();
+                }
+            });
+        });
+    </script>
+</body>
+</html>
