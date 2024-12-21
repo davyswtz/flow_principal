@@ -2,6 +2,7 @@
 class CatalogManager {
     static STORAGE_KEY = 'catalogProducts';
     static MONITORING_INTERVAL = 1000; // 1 segundo
+    static VERCEL_URL = 'https://seu-catalogo.vercel.app'; // Adicione sua URL da Vercel aqui
 
     static addProduct(productData) {
         try {

@@ -389,93 +389,34 @@
         </div>
     </div>
 
+    <script src="config.js"></script>
     <script>
         // Verificar autenticação
-        if (!sessionStorage.getItem('isAuthenticated')) {
+        if (!localStorage.getItem('token')) {
             window.location.href = 'login.html';
         }
 
-        // Função para fazer logout
         function logout() {
-            sessionStorage.removeItem('isAuthenticated');
+            localStorage.removeItem('token');
             window.location.href = 'login.html';
         }
 
-        // Carregar produtos existentes do catálogo
-        let products = [
-            {
-                id: 1,
-                name: "Camiseta Básica",
-                description: "Camiseta 100% algodão, corte regular, disponível em várias cores. Perfeita para o dia a dia.",
-                category: "camisetas",
-                image: "img/fundo.jpg"
-            },
-            {
-                id: 2,
-                name: "Calça Jeans Slim",
-                description: "Calça jeans com lavagem média, corte slim fit. Confortável e estilosa.",
-                category: "calcas",
-                image: "img/file.jpg"
-            },
-            // Adicione aqui os outros produtos do seu catálogo
-        ];
+        let products = [];
 
-        // Se já existem produtos no localStorage, use-os
-        const savedProducts = localStorage.getItem('products');
-        if (savedProducts) {
-            products = JSON.parse(savedProducts);
-        } else {
-            // Se não existem produtos no localStorage, salve os produtos padrão
-            localStorage.setItem('products', JSON.stringify(products));
-        }
-
-        // Gerenciamento de seções
-        function showSection(section) {
-            document.getElementById('add-section').style.display = section === 'add' ? 'block' : 'none';
-            document.getElementById('list-section').style.display = section === 'list' ? 'block' : 'none';
-            
-            if (section === 'list') {
-                loadProducts();
+        // Função para carregar produtos do servidor
+        async function loadProducts() {
+            try {
+                const response = await fetch(`${config.catalogUrl}/api/products`);
+                products = await response.json();
+                displayProducts();
+            } catch (error) {
+                console.error('Erro ao carregar produtos:', error);
+                alert('Erro ao carregar produtos. Por favor, tente novamente.');
             }
         }
 
-        // Preview de imagem
-        document.getElementById('productImage').addEventListener('change', function(e) {
-            const preview = document.getElementById('imagePreview');
-            const file = e.target.files[0];
-            
-            if (file) {
-                const reader = new FileReader();
-                reader.onload = function(e) {
-                    preview.src = e.target.result;
-                    preview.style.display = 'block';
-                }
-                reader.readAsDataURL(file);
-            }
-        });
-
-        // Adicionar novo produto
-        document.getElementById('productForm').addEventListener('submit', function(e) {
-            e.preventDefault();
-            
-            const productData = {
-                id: Date.now(),
-                name: document.getElementById('productName').value,
-                description: document.getElementById('productDescription').value,
-                category: document.getElementById('productCategory').value,
-                image: document.getElementById('imagePreview').src || 'img/default.jpg'
-            };
-
-            products.push(productData);
-            localStorage.setItem('products', JSON.stringify(products));
-            
-            this.reset();
-            document.getElementById('imagePreview').style.display = 'none';
-            alert('Produto adicionado com sucesso!');
-        });
-
-        // Carregar produtos na lista
-        function loadProducts() {
+        // Função para exibir produtos na lista
+        function displayProducts() {
             const productsList = document.getElementById('productsList');
             productsList.innerHTML = '';
 
@@ -502,33 +443,97 @@
             });
         }
 
-        // Deletar produto
-        function deleteProduct(id) {
-            if (confirm('Tem certeza que deseja excluir este produto?')) {
-                products = products.filter(p => p.id !== id);
-                localStorage.setItem('products', JSON.stringify(products));
+        // Adicionar novo produto
+        document.getElementById('productForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const productData = {
+                name: document.getElementById('productName').value,
+                description: document.getElementById('productDescription').value,
+                category: document.getElementById('productCategory').value,
+                image: document.getElementById('imagePreview').src || 'img/default.jpg'
+            };
+
+            try {
+                const response = await fetch(`${config.catalogUrl}/api/products`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${localStorage.getItem('token')}`
+                    },
+                    body: JSON.stringify(productData)
+                });
+
+                if (!response.ok) throw new Error('Erro ao adicionar produto');
+
+                this.reset();
+                document.getElementById('imagePreview').style.display = 'none';
+                alert('Produto adicionado com sucesso!');
                 loadProducts();
+            } catch (error) {
+                console.error('Erro:', error);
+                alert('Erro ao adicionar produto. Por favor, tente novamente.');
+            }
+        });
+
+        // Deletar produto
+        async function deleteProduct(id) {
+            if (!confirm('Tem certeza que deseja excluir este produto?')) return;
+
+            try {
+                const response = await fetch(`${config.catalogUrl}/api/products/${id}`, {
+                    method: 'DELETE',
+                    headers: {
+                        'Authorization': `Bearer ${localStorage.getItem('token')}`
+                    }
+                });
+
+                if (!response.ok) throw new Error('Erro ao deletar produto');
+
+                alert('Produto deletado com sucesso!');
+                loadProducts();
+            } catch (error) {
+                console.error('Erro:', error);
+                alert('Erro ao deletar produto. Por favor, tente novamente.');
             }
         }
 
         // Editar produto
-        function editProduct(id) {
+        async function editProduct(id) {
             const product = products.find(p => p.id === id);
-            if (product) {
-                document.getElementById('productName').value = product.name;
-                document.getElementById('productDescription').value = product.description;
-                document.getElementById('productCategory').value = product.category;
-                
-                const preview = document.getElementById('imagePreview');
-                preview.src = product.image;
-                preview.style.display = 'block';
-                
-                // Remove o produto atual e atualiza quando o formulário for enviado
-                products = products.filter(p => p.id !== id);
-                localStorage.setItem('products', JSON.stringify(products));
-                
-                showSection('add');
-                window.scrollTo(0, 0);
+            if (!product) return;
+
+            const newName = prompt('Novo nome:', product.name);
+            if (!newName) return;
+
+            const newDescription = prompt('Nova descrição:', product.description);
+            if (!newDescription) return;
+
+            const newCategory = prompt('Nova categoria:', product.category);
+            if (!newCategory) return;
+
+            try {
+                const response = await fetch(`${config.catalogUrl}/api/products/${id}`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${localStorage.getItem('token')}`
+                    },
+                    body: JSON.stringify({
+                        name: newName,
+                        description: newDescription,
+                        category: newCategory,
+                        image: product.image
+                    })
+                });
+
+                if (!response.ok) throw new Error('Erro ao atualizar produto');
+
+                alert('Produto atualizado com sucesso!');
+                loadProducts();
+            } catch (error) {
+                console.error('Erro:', error);
+                alert('Erro ao atualizar produto. Por favor, tente novamente.');
             }
         }
 
